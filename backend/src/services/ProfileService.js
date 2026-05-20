@@ -32,6 +32,7 @@ class ProfileService {
         }),
       address: Joi.string().max(500),
       profile_image: Joi.string().uri(),
+      gender: Joi.boolean().allow(null),
     });
 
     const { error, value } = schema.validate(profileData, {
@@ -82,6 +83,7 @@ class ProfileService {
         }),
       address: Joi.string().max(500),
       profile_image: Joi.string().uri(),
+      gender: Joi.boolean().allow(null),
     }).min(1);
 
     const { error, value } = schema.validate(profileData, {

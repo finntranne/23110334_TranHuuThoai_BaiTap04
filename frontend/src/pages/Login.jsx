@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-
 import { login } from "../redux/slices/authSlice";
-
-import InputField from "../components/InputField";
-import Button from "../components/Button";
+import Input from "../components/common/Input";
+import Button from "../components/common/Button";
+import Alert from "../components/common/Alert";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -38,59 +37,85 @@ const Login = () => {
     );
 
     if (login.fulfilled.match(resultAction)) {
-      // lấy redirectUrl từ backend
-      const redirectUrl =
-        resultAction.payload.redirectUrl;
-
+      const redirectUrl = resultAction.payload.redirectUrl;
       navigate(redirectUrl);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          Đăng Nhập
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
+      <div className="bg-white p-8 rounded-lg border border-neutral-200 w-full max-w-md space-y-6">
+        
+        {/* Header/Logo */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex w-12 h-12 rounded bg-neutral-900 items-center justify-center text-white font-black text-xl tracking-wider">
+            CS
+          </div>
+          <h2 className="text-xl font-black text-neutral-900 tracking-wide uppercase">
+            Đăng Nhập Thành Viên
+          </h2>
+          <p className="text-xs text-neutral-500 max-w-[280px] mx-auto leading-relaxed">
+            Đăng nhập để nhận các chương trình ưu đãi, tích lũy điểm và trải nghiệm mua sắm tốt nhất.
+          </p>
+        </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-            {error}
-          </div>
+          <Alert
+             type="error"
+             message={error}
+          />
         )}
 
-        <form onSubmit={handleSubmit}>
-          <InputField
-            label="Email"
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Địa chỉ Email"
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Nhập email"
+            placeholder="name@example.com"
+            required
           />
 
-          <InputField
-            label="Mật khẩu"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Nhập mật khẩu"
-          />
+          <div className="space-y-1">
+            <Input
+              label="Mật khẩu"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Nhập mật khẩu của bạn"
+              required
+            />
+            <div className="flex justify-end pt-1">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-bold text-neutral-800 hover:text-neutral-950 hover:underline transition-all"
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
+          </div>
 
-          <div className="mt-6">
-            <Button type="submit" isLoading={loading}>
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full rounded py-2.5 text-xs font-bold uppercase tracking-wider"
+              isLoading={loading}
+            >
               Đăng Nhập
             </Button>
           </div>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="text-center text-xs text-neutral-500 border-t border-neutral-100 pt-4 font-bold">
+          Chưa có tài khoản?{" "}
           <Link
-            to="/forgot-password"
-            className="text-blue-500"
+            to="/register"
+            className="text-neutral-900 hover:text-neutral-950 hover:underline font-black transition-all ml-1 uppercase"
           >
-            Quên mật khẩu?
+            Đăng ký thành viên
           </Link>
         </div>
       </div>

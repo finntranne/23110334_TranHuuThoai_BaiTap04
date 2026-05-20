@@ -14,7 +14,7 @@ class UserRepository {
    * Lấy người dùng theo ID
    */
   async getUserById(id) {
-    const query = 'SELECT id, email, fullName as full_name, phoneNumber as phone, address, image as profile_image, roleId as role, createdAt as created_at, updatedAt as updated_at FROM users WHERE id = ?';
+    const query = 'SELECT id, email, fullName as full_name, phoneNumber as phone, address, image as profile_image, gender, isVerified, roleId as role, createdAt as created_at, updatedAt as updated_at FROM users WHERE id = ?';
     const [rows] = await pool.query(query, [id]);
     return rows[0];
   }
@@ -62,6 +62,10 @@ class UserRepository {
     if (profileData.profile_image !== undefined) {
       fields.push('image = ?');
       values.push(profileData.profile_image);
+    }
+    if (profileData.gender !== undefined) {
+      fields.push('gender = ?');
+      values.push(profileData.gender);
     }
 
     fields.push('updatedAt = NOW()');

@@ -7,7 +7,7 @@ import ForgotPasswordFlow from '../components/auth/ForgotPasswordFlow';
  */
 const ForgotPasswordPage = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
       <ForgotPasswordFlow />
     </div>
   );

@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPasswordWithOTP, setForgotPasswordStep } from '../../redux/slices/authSlice';
 import Button from '../common/Button';
+import Input from '../common/Input';
+import Alert from '../common/Alert';
 
-/**
- * Component để đặt lại mật khẩu
- */
 const ResetPasswordForm = () => {
   const dispatch = useDispatch();
   const { loading, error, forgotPasswordUserId, forgotPasswordOTP } = useSelector(state => state.auth);
@@ -14,10 +13,8 @@ const ResetPasswordForm = () => {
     confirmPassword: ''
   });
   const [validationError, setValidationError] = useState('');
-  const [showPassword, setShowPassword] = useState({
-    newPassword: false,
-    confirmPassword: false
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const validatePassword = (password) => {
     const errors = [];
@@ -71,99 +68,82 @@ const ResetPasswordForm = () => {
     dispatch(setForgotPasswordStep('otp'));
   };
 
-  const togglePasswordVisibility = (field) => {
-    setShowPassword(prev => ({
-      ...prev,
-      [field]: !prev[field]
-    }));
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Đặt lại mật khẩu</h2>
-        <p className="text-gray-600 mt-2">
-          Nhập mật khẩu mới của bạn
+      <div className="text-center space-y-2 mb-6">
+        <div className="inline-flex w-12 h-12 rounded bg-neutral-900 items-center justify-center text-white font-black text-xl tracking-wider animate-pulse">
+          CS
+        </div>
+        <h2 className="text-xl font-black text-neutral-900 uppercase tracking-wide">Đặt lại mật khẩu</h2>
+        <p className="text-xs text-neutral-500 max-w-[280px] mx-auto leading-relaxed">
+          Tạo mật khẩu mới có tính bảo mật cao cho tài khoản thành viên của bạn.
         </p>
       </div>
 
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
+      {(error || validationError) && (
+        <Alert
+          type="error"
+          message={error || validationError}
+        />
       )}
 
-      {validationError && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {validationError}
-        </div>
-      )}
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Mật khẩu mới <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <input
-            type={showPassword.newPassword ? 'text' : 'password'}
-            name="newPassword"
-            placeholder="Nhập mật khẩu mới"
-            value={formData.newPassword}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => togglePasswordVisibility('newPassword')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword.newPassword ? '👁️' : '👁️‍🗨️'}
-          </button>
-        </div>
-        <p className="text-xs text-gray-500 mt-1">
-          Phải chứa: 8+ ký tự, chữ hoa, chữ thường, số
+      {/* Password field */}
+      <div className="relative">
+        <Input
+          label="Mật khẩu mới"
+          type={showPassword ? 'text' : 'password'}
+          name="newPassword"
+          placeholder="Nhập mật khẩu mới"
+          value={formData.newPassword}
+          onChange={handleChange}
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-[38px] text-xs font-bold text-neutral-450 hover:text-neutral-700"
+        >
+          {showPassword ? 'Ẩn' : 'Hiện'}
+        </button>
+        <p className="text-[10px] text-neutral-450 mt-1 font-bold">
+          Yêu cầu: 8+ ký tự, chữ hoa, chữ thường và chữ số
         </p>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Xác nhận mật khẩu <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <input
-            type={showPassword.confirmPassword ? 'text' : 'password'}
-            name="confirmPassword"
-            placeholder="Nhập lại mật khẩu"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => togglePasswordVisibility('confirmPassword')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword.confirmPassword ? '👁️' : '👁️‍🗨️'}
-          </button>
-        </div>
+      {/* Confirm Password field */}
+      <div className="relative">
+        <Input
+          label="Xác nhận mật khẩu"
+          type={showConfirm ? 'text' : 'password'}
+          name="confirmPassword"
+          placeholder="Nhập lại mật khẩu mới"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowConfirm(!showConfirm)}
+          className="absolute right-3 top-[38px] text-xs font-bold text-neutral-450 hover:text-neutral-700"
+        >
+          {showConfirm ? 'Ẩn' : 'Hiện'}
+        </button>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-4">
         <Button
           type="button"
           variant="secondary"
-          size="lg"
           onClick={handleBack}
-          className="w-full"
+          className="flex-1 rounded text-xs py-2.5 uppercase font-bold"
         >
           Quay lại
         </Button>
         <Button
           type="submit"
           variant="primary"
-          size="lg"
           isLoading={loading}
-          className="w-full"
+          className="flex-1 rounded text-xs py-2.5 uppercase font-bold"
         >
           Đặt lại mật khẩu
         </Button>

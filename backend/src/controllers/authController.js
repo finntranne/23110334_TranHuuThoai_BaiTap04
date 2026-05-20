@@ -1,6 +1,6 @@
 // controllers/authController.js
 const authService = require("../services/authService");
-const { generateToken } = require("../utils/jwt");
+const { generateToken } = require("../utils/jwtService");
 
 let handleRegister = async (req, res) => {
   try {
@@ -60,10 +60,13 @@ const login = async (req, res) => {
       });
     }
 
-    // Tạo token dựa trên dữ liệu thật từ DB
     let token;
     try {
-      token = generateToken(userData.user);
+      token = generateToken({
+        id: userData.user.id,
+        email: userData.user.email,
+        role: userData.user.role
+      });
     } catch (tokenError) {
       console.error("Token generation error:", tokenError.message);
       return res.status(500).json({

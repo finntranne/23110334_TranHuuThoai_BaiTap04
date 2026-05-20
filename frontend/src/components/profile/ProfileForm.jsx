@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   updateProfile,
-  updateName,
-  updatePhone,
-  updateAddress,
   clearSuccessMessage,
   clearError
 } from '../../redux/slices/profileSlice';
@@ -12,25 +9,24 @@ import Input from '../common/Input';
 import Button from '../common/Button';
 import Alert from '../common/Alert';
 
-/**
- * Component form chỉnh sửa profile
- */
 const ProfileForm = () => {
   const dispatch = useDispatch();
   const { user, loading, error, successMessage } = useSelector(state => state.profile);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
-    address: ''
+    address: '',
+    gender: ''
   });
   const [validationErrors, setValidationErrors] = useState({});
 
   useEffect(() => {
     if (user) {
       setFormData({
-        fullName: user.full_name || '',
-        phone: user.phone || '',
-        address: user.address || ''
+        fullName: user.fullName || user.full_name || '',
+        phone: user.phoneNumber || user.phone || '',
+        address: user.address || '',
+        gender: user.gender === true || user.gender === 1 || user.gender === '1' ? '1' : user.gender === false || user.gender === 0 || user.gender === '0' ? '0' : ''
       });
     }
   }, [user]);
@@ -79,23 +75,14 @@ const ProfileForm = () => {
     dispatch(updateProfile({
       full_name: formData.fullName,
       phone: formData.phone,
-      address: formData.address
+      address: formData.address,
+      gender: formData.gender === '1' ? true : formData.gender === '0' ? false : null
     }));
-  };
-
-  const handleQuickUpdate = (field, value) => {
-    if (field === 'name') {
-      dispatch(updateName(value));
-    } else if (field === 'phone') {
-      dispatch(updatePhone(value));
-    } else if (field === 'address') {
-      dispatch(updateAddress(value));
-    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Chỉnh sửa hồ sơ</h2>
+      <h2 className="text-lg font-black text-neutral-900 border-b border-neutral-100 pb-3 uppercase tracking-wide">Chỉnh sửa hồ sơ cá nhân</h2>
 
       {error && (
         <Alert
@@ -138,46 +125,68 @@ const ProfileForm = () => {
           onChange={handleChange}
           error={validationErrors.phone}
         />
-        <p className="text-xs text-gray-500 mt-1">Định dạng: 10 chữ số</p>
+        <p className="text-[11px] text-neutral-450 mt-1 font-semibold">Định dạng: 10 chữ số liên tục</p>
+      </div>
+
+      {/* Gender */}
+      <div className="space-y-1">
+        <label className="block text-xs font-bold text-neutral-455 uppercase tracking-wider mb-2">Giới tính</label>
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 text-sm text-neutral-800 font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="gender"
+              value="1"
+              checked={formData.gender === '1'}
+              onChange={handleChange}
+              className="w-4 h-4 text-neutral-900 focus:ring-neutral-900 border-neutral-300"
+            />
+            <span>Nam</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-800 font-bold cursor-pointer">
+            <input
+              type="radio"
+              name="gender"
+              value="0"
+              checked={formData.gender === '0'}
+              onChange={handleChange}
+              className="w-4 h-4 text-neutral-900 focus:ring-neutral-900 border-neutral-300"
+            />
+            <span>Nữ</span>
+          </label>
+        </div>
       </div>
 
       {/* Address */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Địa chỉ
+        <label className="block text-sm font-medium text-neutral-700 mb-2">
+          Địa chỉ giao hàng
         </label>
         <textarea
           name="address"
-          placeholder="Nhập địa chỉ"
+          placeholder="Nhập địa chỉ nhận hàng chi tiết"
           value={formData.address}
           onChange={handleChange}
           rows="3"
           className={`
-            w-full px-4 py-2 border rounded-lg
-            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+            w-full px-4 py-2 border rounded text-sm
+            focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900
             transition-colors duration-200
-            ${validationErrors.address ? 'border-red-500 focus:ring-red-500' : 'border-gray-300'}
+            ${validationErrors.address ? 'border-red-500 focus:ring-red-500' : 'border-neutral-200 focus:border-neutral-900'}
           `}
         />
         {validationErrors.address && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.address}</p>
+          <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.address}</p>
         )}
-        <p className="text-xs text-gray-500 mt-1">Tối thiểu 5 ký tự</p>
+        <p className="text-[11px] text-neutral-450 mt-1 font-semibold">Tối thiểu 5 ký tự để đảm bảo giao hàng chính xác</p>
       </div>
 
       {/* Buttons */}
-      <div className="flex gap-3 justify-end">
-        <Button
-          type="button"
-          variant="secondary"
-          size="lg"
-        >
-          Hủy
-        </Button>
+      <div className="flex gap-3 justify-end pt-4 border-t border-neutral-100">
         <Button
           type="submit"
           variant="primary"
-          size="lg"
+          className="rounded px-5 py-2 text-xs font-bold uppercase tracking-wider"
           isLoading={loading}
         >
           Lưu thay đổi

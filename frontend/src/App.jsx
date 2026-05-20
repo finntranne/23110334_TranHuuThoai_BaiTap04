@@ -6,7 +6,8 @@ import ProfilePage from "./pages/ProfilePage";
 import RegisterPage from "./pages/Register";
 import VerifySignUpOTPPage from "./pages/VerifySignUpOTP";
 import HomePage from "./pages/HomePage";
-import CoursesPage from "./pages/CoursesPage";
+import ProductsPage from "./pages/ProductsPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
 
 function App() {
   return (
@@ -30,10 +31,17 @@ function App() {
         {/* Profile */}
         <Route path="/profile" element={<ProfilePage />} />
 
+        {/* Clothing Products Listing */}
+        <Route path="/products" element={<ProductsPage />} />
+
+        {/* Clothing Product Details */}
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+
+        {/* Backward Compatibility Redirect */}
+        <Route path="/courses" element={<Navigate to="/products" replace />} />
+
         {/* Default Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
-
-        <Route path="/courses" element={<CoursesPage />} />
       </Routes>
     </BrowserRouter>
   );

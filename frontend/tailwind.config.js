@@ -7,13 +7,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#3B82F6",
+        primary: "#2f5acf", // Coolmate Blue
         secondary: "#10B981",
         danger: "#EF4444",
         warning: "#F59E0B",
+        coolmateBlue: "#2f5acf",
+        coolmateBlack: "#111111",
+        coolmateGray: "#2f3033",
+        coolmateLight: "#f4f4f4",
       },
       fontFamily: {
-        sans: ["system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
     },
   },

@@ -1,12 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import ForgotPasswordForm from './ForgotPasswordForm';
 import VerifyOTPForm from './VerifyOTPForm';
 import ResetPasswordForm from './ResetPasswordForm';
 
-/**
- * Component chính cho Forgot Password flow
- */
 const ForgotPasswordFlow = () => {
   const { forgotPasswordStep, successMessage } = useSelector(state => state.auth);
 
@@ -20,27 +18,34 @@ const ForgotPasswordFlow = () => {
         return <ResetPasswordForm />;
       case 'success':
         return (
-          <div className="text-center py-8">
-            <div className="mb-4">
+          <div className="text-center py-6 space-y-4">
+            <div className="w-12 h-12 bg-emerald-50 border border-emerald-150 rounded-full flex items-center justify-center mx-auto text-emerald-600 shadow-inner">
               <svg
-                className="mx-auto h-12 w-12 text-green-600"
+                className="h-6 w-6"
                 fill="none"
                 stroke="currentColor"
+                strokeWidth="2.5"
                 viewBox="0 0 24 24"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
                   d="M5 13l4 4L19 7"
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Thành công!</h2>
-            <p className="text-gray-600 mb-6">{successMessage}</p>
-            <p className="text-gray-600">
-              Bạn có thể đăng nhập với mật khẩu mới của mình
-            </p>
+            <div className="space-y-1">
+              <h2 className="text-lg font-black text-neutral-900 uppercase tracking-wide">Khôi phục thành công!</h2>
+              <p className="text-xs text-neutral-500">{successMessage}</p>
+            </div>
+            <div className="pt-4 border-t border-neutral-100">
+              <Link
+                to="/login"
+                className="inline-block w-full py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-bold rounded transition-all text-xs text-center uppercase tracking-wider"
+              >
+                Đăng nhập ngay
+              </Link>
+            </div>
           </div>
         );
       default:
@@ -49,10 +54,8 @@ const ForgotPasswordFlow = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-8">
-        {renderStep()}
-      </div>
+    <div className="w-full max-w-md bg-white rounded-lg border border-neutral-200 p-8">
+      {renderStep()}
     </div>
   );
 };

@@ -17,17 +17,17 @@ const Button = ({
   const baseStyles = 'font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500',
+    primary: 'bg-neutral-900 text-white hover:bg-neutral-800 focus:ring-neutral-900 shadow-sm',
+    secondary: 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200 focus:ring-neutral-400 border border-neutral-300',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500'
+    success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500',
+    outline: 'border border-neutral-900 text-neutral-900 hover:bg-neutral-50 focus:ring-neutral-900'
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg'
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
   };
 
   const disabledStyles = disabled || isLoading
@@ -38,7 +38,7 @@ const Button = ({
     <button
       type={type}
       disabled={disabled || isLoading}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${disabledStyles} rounded-lg ${className}`}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${disabledStyles} rounded ${className}`}
       onClick={onClick}
       {...props}
     >

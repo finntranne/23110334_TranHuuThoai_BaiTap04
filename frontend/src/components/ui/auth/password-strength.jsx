@@ -2,13 +2,13 @@ import React from "react";
 
 export const BAR_COLORS = [
   "",
-  "bg-red-500",
-  "bg-yellow-500",
-  "bg-blue-500",
-  "bg-green-500",
+  "bg-rose-500",
+  "bg-amber-500",
+  "bg-indigo-500",
+  "bg-emerald-500",
 ];
 
-export const STRENGTH_LABELS = ["", "Too weak", "Fair", "Good", "Strong"];
+export const STRENGTH_LABELS = ["", "Quá yếu", "Trung bình", "Khá tốt", "Rất mạnh"];
 
 export const getPasswordScore = (pw) => {
   if (!pw) return 0;
@@ -24,25 +24,25 @@ export const getPasswordScore = (pw) => {
 
 export const PasswordStrength = ({ password }) => {
   const score = getPasswordScore(password);
-  const color = password ? BAR_COLORS[score] : "bg-slate-200";
+  const color = password ? BAR_COLORS[score] : "bg-neutral-200";
 
   return (
-    <div>
-      <div className="mt-[10px] mb-1 flex gap-[6px]">
+    <div className="mt-2">
+      <div className="flex gap-1.5">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className={`h-[5px] flex-1 rounded-full transition-all duration-300 ${
-              password && i <= score ? color : "bg-slate-200"
+            className={`h-[4px] flex-1 rounded-full transition-all duration-300 ${
+              password && i <= score ? color : "bg-neutral-200"
             }`}
           />
         ))}
       </div>
 
-      <p className="text-left text-[12px] text-slate-400">
-        Password strength:{" "}
-        <span className="font-semibold text-slate-600">
-          {password ? STRENGTH_LABELS[score] : ""}
+      <p className="text-left text-[11px] text-neutral-500 mt-1">
+        Độ mạnh mật khẩu:{" "}
+        <span className="font-bold text-neutral-800">
+          {password ? STRENGTH_LABELS[score] : "Chưa nhập"}
         </span>
       </p>
     </div>

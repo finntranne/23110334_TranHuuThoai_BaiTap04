@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
-import { baseButtonClass } from "../components/ui/auth/button";
+import Button from "../components/common/Button";
+import Alert from "../components/common/Alert";
 
 import { verifySignUpOTP, clearError } from "../redux/slices/authSlice";
 
@@ -12,7 +12,6 @@ const OTP_LENGTH = 6;
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
@@ -28,11 +27,10 @@ const VerifySignUpOTPPage = () => {
 
   // resend timer
   const [timer, setTimer] = useState(RESEND_SECONDS);
-
   const [canResend, setCanResend] = useState(false);
 
   // local validation
-  const [errors, setErrors] = useState({});
+  const [validationError, setValidationError] = useState("");
 
   // refs
   const inputsRef = useRef([]);
@@ -54,19 +52,12 @@ const VerifySignUpOTPPage = () => {
   // handle input change
   const handleChange = (index, e) => {
     const val = e.target.value.replace(/\D/g, "").slice(-1);
-
     const newOtp = [...otp];
-
     newOtp[index] = val;
-
     setOtp(newOtp);
 
-    // clear local error
-    if (errors.api) {
-      setErrors({});
-    }
-
-    // clear redux error
+    // clear errors
+    setValidationError("");
     if (error) {
       dispatch(clearError());
     }
@@ -87,54 +78,40 @@ const VerifySignUpOTPPage = () => {
   // paste otp
   const handlePaste = (e) => {
     e.preventDefault();
-
     const pasted = e.clipboardData
       .getData("text")
       .replace(/\D/g, "")
       .slice(0, OTP_LENGTH);
 
     const newOtp = [...otp];
-
     pasted.split("").forEach((ch, i) => {
       newOtp[i] = ch;
     });
-
     setOtp(newOtp);
 
     const nextIndex = Math.min(pasted.length, OTP_LENGTH - 1);
-
     inputsRef.current[nextIndex]?.focus();
   };
 
   // resend otp
   const handleResend = () => {
     if (!canResend) return;
-
     setOtp(Array(OTP_LENGTH).fill(""));
-
     setTimer(RESEND_SECONDS);
-
     setCanResend(false);
-
     inputsRef.current[0]?.focus();
   };
 
   // verify otp
   const handleVerify = async (e) => {
     e.preventDefault();
-
     const code = otp.join("");
-
     const email = localStorage.getItem("email");
-
-    setErrors({});
+    setValidationError("");
 
     // validate
     if (code.length < OTP_LENGTH) {
-      setErrors({
-        api: "Please enter full OTP code!",
-      });
-
+      setValidationError("Vui lòng điền đầy đủ mã OTP 6 chữ số!");
       return;
     }
 
@@ -149,7 +126,6 @@ const VerifySignUpOTPPage = () => {
     // success
     if (verifySignUpOTP.fulfilled.match(resultAction)) {
       localStorage.removeItem("email");
-
       navigate("/login");
     }
   };
@@ -157,79 +133,33 @@ const VerifySignUpOTPPage = () => {
   const isComplete = otp.every((digit) => digit !== "");
 
   return (
-    <div className="flex min-h-[50vh] justify-center bg-[#eef2f9] px-4 py-5">
-      <div
-        className="
-          w-full
-          max-w-[500px]
-          rounded-[32px]
-          bg-white
-          px-10
-          pt-10
-          pb-9
-          text-left
-          shadow-[0_2px_16px_rgba(0,0,0,0.06)]
-        "
-      >
+    <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4 py-8">
+      <div className="w-full max-w-[500px] rounded-lg bg-white px-8 py-10 border border-neutral-200 space-y-6">
+        
         {/* Header */}
-        <p
-          className="
-            mb-1
-            text-center
-            text-[18px]
-            font-bold
-            uppercase
-            tracking-[5px]
-            text-blue-600
-          "
-        >
-          Verify Your Account
-        </p>
-
-        <h1
-          className="
-            mt-[10px]
-            mb-[10px]
-            text-center
-            text-[2rem]
-            font-bold
-            leading-none
-            text-slate-900
-          "
-        >
-          Enter 6-digit code
-        </h1>
-
-        <p
-          className="
-            mb-7
-            text-center
-            text-[16px]
-            leading-[1.6]
-            text-gray-500
-          "
-        >
-          We sent an OTP to your email address.
-        </p>
+        <div className="text-center space-y-2">
+          <div className="inline-flex w-12 h-12 rounded bg-neutral-900 items-center justify-center text-white font-black text-xl tracking-wider animate-pulse">
+            CS
+          </div>
+          <h1 className="text-xl font-black text-neutral-900 tracking-wide uppercase">
+            Xác Minh Tài Khoản
+          </h1>
+          <p className="text-xs text-neutral-500 max-w-[320px] mx-auto leading-relaxed">
+            Nhập mã OTP 6 chữ số vừa được gửi tới Email đăng ký thành viên của bạn.
+          </p>
+        </div>
 
         {/* Form */}
-        <form onSubmit={handleVerify} className="text-left">
-          {/* Error */}
-          {(errors.api || error) && (
-            <p className="mt-2 mb-4 text-sm text-red-500">
-              {errors.api || error}
-            </p>
+        <form onSubmit={handleVerify} className="space-y-6">
+          {(validationError || error) && (
+            <Alert
+              type="error"
+              message={validationError || error}
+            />
           )}
 
           {/* OTP Inputs */}
-          <div
-            className="
-              mb-[28px]
-              flex
-              justify-center
-              gap-[10px]
-            "
-          >
+          <div className="flex justify-center gap-2 py-2">
             {otp.map((digit, i) => (
               <input
                 key={i}
@@ -241,90 +171,44 @@ const VerifySignUpOTPPage = () => {
                 onChange={(e) => handleChange(i, e)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 onPaste={handlePaste}
-                className={`
-                  box-border
-                  h-[60px]
-                  w-[52px]
-                  rounded-[14px]
-                  border-2
-                  bg-white
-                  text-center
-                  text-[22px]
-                  font-bold
-                  text-slate-800
-                  outline-none
-                  transition-colors
-                  ${digit ? "border-blue-500" : "border-slate-200"}
-                `}
+                className="w-12 h-12 text-center text-xl font-bold border border-neutral-200 bg-neutral-50 text-neutral-900 focus:bg-white focus:border-neutral-900 focus:outline-none rounded transition-all"
               />
             ))}
           </div>
 
           {/* Verify Button */}
-          <button
-            type="submit"
-            disabled={!isComplete || loading}
-            className={`
-              ${baseButtonClass}
-              bg-blue-600
-              font-bold
-              text-white
-              shadow-[0_4px_14px_rgba(37,99,235,0.25)]
-              hover:bg-blue-700
-              hover:shadow-[0_8px_20px_rgba(37,99,235,0.35)]
-              disabled:opacity-60
-            `}
-          >
-            {loading ? "Verifying..." : "Verify OTP"}
-          </button>
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!isComplete || loading}
+              className="w-full rounded py-2.5 font-bold text-xs uppercase tracking-wider"
+              isLoading={loading}
+            >
+              Xác Nhận Đăng Ký
+            </Button>
+          </div>
 
           {/* Resend Button */}
           <button
             type="button"
             onClick={handleResend}
             disabled={!canResend}
-            className={`
-              ${baseButtonClass}
-              flex
-              items-center
-              justify-center
-              gap-3
-              border
-              border-gray-300
-              bg-white
-              font-bold
-              transition-all
-              ${
-                canResend
-                  ? "cursor-pointer text-black hover:bg-blue-50"
-                  : "cursor-not-allowed text-gray-400 opacity-70"
-              }
-            `}
+            className={`w-full py-2.5 rounded border text-xs font-bold transition-all text-center flex items-center justify-center gap-2 uppercase tracking-wider ${
+              canResend
+                ? "bg-white border-neutral-300 text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+                : "bg-neutral-50 border-neutral-200 text-neutral-400 cursor-not-allowed"
+            }`}
           >
-            <span>
-              {canResend ? "Resend OTP" : `Resend OTP (${formatTime(timer)})`}
-            </span>
+            {canResend ? "Gửi lại mã OTP" : `Gửi lại mã OTP (${formatTime(timer)})`}
           </button>
         </form>
 
         {/* Footer */}
-        <p
-          className="
-            mt-5
-            text-center
-            text-[15px]
-            text-gray-500
-          "
-        >
-          Back to{" "}
-          <Link
-            to="/register"
-            className="
-              font-bold
-              text-blue-600
-            "
-          >
-            Register
+        <p className="text-center text-xs text-neutral-500 border-t border-neutral-100 pt-4 font-bold">
+          Quay lại trang{" "}
+          <Link to="/register" className="text-neutral-900 hover:text-neutral-950 hover:underline font-black transition-all ml-1 uppercase">
+            Đăng ký
           </Link>
         </p>
       </div>

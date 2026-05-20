@@ -3,7 +3,6 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
-const authRoutes = require("./routes/authRoutes");
 const api = require("./routes/api");
 const profileRoutes = require("./routes/profileRoutes");
 const db = require("./models");
@@ -11,13 +10,26 @@ const db = require("./models");
 const app = express();
 
 // ========== DATABASE SYNC ==========
-const { seedMoreCourses } = require("./utils/seed_more");
-db.sequelize.sync({ alter: true }).then(() => {
-  seedMoreCourses();
-}).catch(err => {
-  console.error("❌ Lỗi đồng bộ database:", err);
-  process.exit(1);
-});
+const cleanAndSyncDb = async () => {
+  try {
+    // Drop old course tables if they exist to keep the database clean
+    await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
+    await db.sequelize.query("DROP TABLE IF EXISTS course_objectives, course_outcomes, course_reasons, course_targets, lessons, sections, reviews, courses;");
+    await db.sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+    console.log("✓ Đã dọn dẹp các bảng khóa học cũ.");
+
+    await db.sequelize.sync({ alter: true });
+    console.log("✓ Đồng bộ database thành công.");
+
+    const { seedProducts } = require("./utils/seed_products");
+    await seedProducts();
+  } catch (err) {
+    console.error("❌ Lỗi đồng bộ/khởi tạo database:", err);
+    process.exit(1);
+  }
+};
+
+cleanAndSyncDb();
 
 // ========== MIDDLEWARE ==========
 app.use(express.json());

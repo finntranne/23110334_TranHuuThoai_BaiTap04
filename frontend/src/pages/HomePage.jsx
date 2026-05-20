@@ -1,408 +1,548 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import "./HomePage.css";
 import { Link } from "react-router-dom";
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../redux/slices/authSlice';
-import { fetchCourses } from "../services/courseAPI";
-
-// === STATIC UI DATA ===
-const MOCK_STATS = [
-  { id: 1, num: "3,000+", label: "Học viên" },
-  { id: 2, num: "12+", label: "Khóa học" },
-  { id: 3, num: "4.9 ★", label: "Đánh giá" },
-  { id: 4, num: "UTE", label: "Đại học" },
-];
-
-const MOCK_REASONS = [
-  {
-    id: 1,
-    icon: "🎓",
-    iconClass: "blue",
-    title: "Từ trường Đại học UTE",
-    desc: "Giảng viên là thầy cô chính thức của Đại học Công nghệ Kỹ thuật TP.HCM, nhiều năm kinh nghiệm giảng dạy."
-  },
-  {
-    id: 2,
-    icon: "💻",
-    iconClass: "green",
-    title: "Thực hành OJ tự động",
-    desc: "Hệ thống chấm bài tự động Online Judge giúp học viên luyện code và nhận phản hồi tức thì mọi lúc."
-  },
-  {
-    id: 3,
-    icon: "👥",
-    iconClass: "purple",
-    title: "Cộng đồng UTE lớn mạnh",
-    desc: "Group Zalo, Discord kết nối 3,000+ học viên và alumni UTE hỗ trợ nhau trong học tập và việc làm."
-  }
-];
-
-const COURSE_STYLES = [
-  { headerClass: "navy", badges: [{ text: "ZOOM", class: "home-badge-zoom" }, { text: "-55%", class: "home-badge-sale" }] },
-  { headerClass: "blue", badges: [{ text: "ZOOM", class: "home-badge-zoom" }, { text: "-57%", class: "home-badge-sale" }] },
-  { headerClass: "green", badges: [{ text: "VIDEO", class: "home-badge-video" }, { text: "-41%", class: "home-badge-sale" }] },
-  { headerClass: "purple", badges: [{ text: "ZOOM", class: "home-badge-zoom" }, { text: "-50%", class: "home-badge-sale" }] },
-];
-
-const AVATAR_COLORS = ["#185FA5", "#3B6D11", "#534AB7"];
-
-const renderStars = (rating) => {
-  let count = 5;
-  if (typeof rating === 'number') {
-    count = rating;
-  } else if (typeof rating === 'string') {
-    count = (rating.match(/★/g) || []).length;
-  }
-  return (
-    <div className="home-star-rating-container" style={{ display: 'inline-flex', gap: '2px', color: '#EF9F27' }}>
-      {[...Array(5)].map((_, i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill={i < count ? "#EF9F27" : "none"} stroke="#EF9F27" strokeWidth="2" style={{ verticalAlign: 'middle' }}>
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ))}
-    </div>
-  );
-};
+import { fetchHomeData } from "../services/productAPI";
+import { toast } from "react-hot-toast";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/layout/Footer";
 
 const HomePage = () => {
-  const [featuredCourses, setFeaturedCourses] = useState([]);
-  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [promoProducts, setPromoProducts] = useState([]);
+  const [newestProducts, setNewestProducts] = useState([]);
+  const [bestSellingProducts, setBestSellingProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // User Auth State
-  const { user, isAuthenticated } = useSelector(state => state.auth);
-  const dispatch = useDispatch();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const slides = [
+    {
+      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1600",
+      tag: "BST MÙA HÈ 2026 • HOT TREND",
+      title: "Phong Cách Tự Tin",
+      highlightTitle: "Định Hình Cá Tính",
+      subtitle: "Khám phá bộ sưu tập thời trang thiết kế độc quyền tại UTESTYLE. Chất liệu cotton cao cấp, thoáng mát, giúp bạn tỏa sáng mỗi ngày.",
+      promoCode: "UTE10",
+      promoDesc: "Ưu đãi thành viên mới",
+      promoHeading: "Giảm thêm 10% cho đơn hàng đầu tiên!",
+      btnLink: "/products",
+      btnText: "Mua Ngay BST Mới"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1600",
+      tag: "BST THU ĐÔNG • NEW ARRIVALS",
+      title: "Thanh Lịch Tự Nhiên",
+      highlightTitle: "Tỏa Sáng Khí Chất",
+      subtitle: "Sự kết hợp hoàn hảo giữa thiết kế tối giản hiện đại và chất liệu len dệt cao cấp mềm mại cho những ngày se lạnh.",
+      promoCode: "WINTER15",
+      promoDesc: "Bộ sưu tập mùa lạnh",
+      promoHeading: "Giảm ngay 15% cho tất cả dòng áo khoác!",
+      btnLink: "/products",
+      btnText: "Khám Phá Áo Ấm"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600",
+      tag: "SẢN PHẨM BÁN CHẠY • BEST SELLERS",
+      title: "Khẳng Định Vẻ Đẹp",
+      highlightTitle: "Thời Thượng Độc Bản",
+      subtitle: "Được săn đón nhiều nhất bởi các tín đồ thời trang. Đặt mua hôm nay để nhận thêm nhiều quà tặng đi kèm.",
+      promoCode: "FREESHIP",
+      promoDesc: "Ưu đãi vận chuyển",
+      promoHeading: "Miễn phí vận chuyển toàn quốc cho đơn từ 500k!",
+      btnLink: "/products",
+      btnText: "Xem Ngay Best Sellers"
+    }
+  ];
 
-  const handleLogout = () => {
-    dispatch(logout());
-    setIsDropdownOpen(false);
-  };
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.home-user-nav')) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
-  // Fetch Featured Courses (Lấy 4 khoá nổi bật)
   useEffect(() => {
-    const loadFeaturedCourses = async () => {
-      setLoadingCourses(true);
+    const loadHomeData = async () => {
+      setLoading(true);
       try {
-        const res = await fetchCourses({ page: 1, limit: 4, sort: "popular" });
-        if (res.data && res.data.data && res.data.data.courses) {
-          const list = res.data.data.courses;
-          const formatted = list.map((c, index) => {
-            const style = COURSE_STYLES[index % COURSE_STYLES.length];
-            return {
-              id: c.id,
-              featured: index === 1,
-              featuredLabel: index === 1 ? "⭐ Phổ biến nhất" : "",
-              headerClass: style.headerClass,
-              badges: style.badges,
-              title: c.title,
-              price: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(c.price || 0),
-              meta: c.description ? c.description.split('.')[0] : "",
-              schedule: c.description ? c.description.split('.').slice(1).join('.').trim() : "",
-              thumbnail: c.thumbnail,
-              rating: "★★★★★",
-              reviews: Math.floor(Math.random() * 200) + 50,
-              oldPrice: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((c.price || 0) * 2)
-            };
-          });
-          setFeaturedCourses(formatted);
+        const res = await fetchHomeData();
+        if (res.data && res.data.success) {
+          const { promoProducts, newestProducts, bestSellingProducts, reviews } = res.data.data;
+          setPromoProducts(promoProducts || []);
+          setNewestProducts(newestProducts || []);
+          setBestSellingProducts(bestSellingProducts || []);
+          setReviews(reviews || []);
         }
       } catch (err) {
-        console.error("Error fetching featured courses:", err);
+        console.error("Error fetching homepage data:", err);
+        toast.error("Không thể kết nối máy chủ để tải dữ liệu!");
       } finally {
-        setLoadingCourses(false);
+        setLoading(false);
       }
     };
 
-    loadFeaturedCourses();
+    loadHomeData();
   }, []);
 
-  // Fetch Reviews
-  useEffect(() => {
-    const fetchReviewsData = async () => {
-      setLoadingReviews(true);
-      try {
-        const response = await axios.get("http://localhost:3000/api/home-data");
-        if (response.data.success) {
-          const dbReviews = response.data.data.reviews;
-          if (dbReviews && dbReviews.length > 0) {
-            setReviews(dbReviews.map((r, index) => {
-              const userObj = r.User || {};
-              let name = "Học viên UTE";
-              if (userObj.firstName && userObj.lastName) {
-                name = `${userObj.lastName} ${userObj.firstName}`;
-              } else if (userObj.fullName) {
-                name = userObj.fullName;
-              } else if (userObj.email) {
-                const emailName = userObj.email.split('@')[0];
-                name = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-              }
-              const avatar = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  };
 
-              return {
-                id: r.id,
-                text: `"${r.comment}"`,
-                stars: "★".repeat(r.rating || 5) + "☆".repeat(5 - (r.rating || 5)),
-                name: name,
-                avatar: avatar,
-                avatarBg: AVATAR_COLORS[index % AVATAR_COLORS.length],
-                role: "Sinh viên CNTT — UTE"
-              };
-            }));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching reviews data:", error);
-      } finally {
-        setLoadingReviews(false);
-      }
-    };
-
-    fetchReviewsData();
-  }, []);
+  const renderStars = (rating) => {
+    const starsCount = Math.round(rating);
+    return (
+      <div className="flex gap-1 text-amber-500">
+        {[...Array(5)].map((_, i) => (
+          <svg
+            key={i}
+            className={`w-4 h-4 ${i < starsCount ? "fill-current" : "stroke-current fill-none"}`}
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+          </svg>
+        ))}
+      </div>
+    );
+  };
 
   return (
-    <div className="home-container">
+    <div className="min-h-screen bg-white text-neutral-800 font-sans antialiased flex flex-col justify-between">
+      
       {/* NAVBAR */}
-      <nav className="home-navbar">
-        <Link to="/" className="home-navbar-logo" style={{ textDecoration: 'none' }}>
-          <div className="home-logo-box">UTE</div>
-          <div>
-            <div className="home-logo-text">UTE Tech</div>
-            <div className="home-logo-sub">Learn. Build. Grow.</div>
-          </div>
-        </Link>
+      <Navbar />
 
-        <div className="home-navbar-links">
-          <Link to="/" className="active">Trang chủ</Link>
-          <Link to="/courses">Khóa học</Link>
-          <a href="#blog">Blog</a>
-          <a href="#tutorial">Tutorial</a>
-        </div>
-
-        <div className="home-user-nav" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          {isAuthenticated ? (
-            <>
-              <div className="home-nav-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                <span className="home-nav-badge">24</span>
-              </div>
-              <div className="home-nav-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="home-user-avatar-btn"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  aria-expanded={isDropdownOpen}
-                >
-                  <div className="home-user-avatar">
-                    {user?.image ? (
-                      <img src={user.image} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                    ) : (
-                      (user?.fullName || user?.email || "User").substring(0, 1).toUpperCase()
-                    )}
-                  </div>
-                  <svg className="home-user-chevron" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                {isDropdownOpen && (
-                  <div className="home-dropdown-menu">
-                    <Link to="/profile" className="home-dropdown-item">Thông tin cá nhân</Link>
-                    <div className="home-dropdown-divider"></div>
-                    <button onClick={handleLogout} className="home-dropdown-item">Đăng xuất</button>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="home-btn-outline" style={{ textDecoration: 'none', padding: '7px 18px', fontSize: '13px', fontWeight: '500' }}>
-                Đăng nhập
-              </Link>
-              <Link to="/register" className="home-btn-contact" style={{ textDecoration: 'none' }}>
-                Đăng ký
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
-
-      {/* HERO */}
-      <section className="home-hero">
-        <div className="home-hero-content">
-          <div className="home-hero-label">Đại học Công nghệ Kỹ thuật TP.HCM</div>
-          <h1 className="home-hero-title">
-            UTE Tech — Học lập trình<br />
-            <span>chất lượng cao</span><br />
-            cùng cộng đồng UTE
-          </h1>
-          <p className="home-hero-desc">
-            Nền tảng khóa học lập trình dành cho sinh viên Đại học Công nghệ Kỹ thuật và cộng đồng lập trình viên Việt Nam. Học với giảng viên thực chiến, chấm bài tự động OJ.
-          </p>
-          <div className="home-hero-cta">
-            <Link to="/courses" className="home-btn-primary" style={{ textDecoration: 'none' }}>Xem Khóa Học</Link>
-            <button className="home-btn-outline">Liên hệ Zalo</button>
-          </div>
-
-          <div className="home-hero-stats">
-            {MOCK_STATS.map((stat) => (
-              <div key={stat.id}>
-                <div className="home-stat-num">{stat.num}</div>
-                <div className="home-stat-label">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="home-hero-visual">
-          <div className="home-hero-icon">🎓</div>
-          <div className="home-hero-icon-label">UTE Tech Platform</div>
-        </div>
-      </section>
-
-      {/* COURSES SECTION (Featured only) */}
-      <section className="home-section">
-        <h2 className="home-section-title">Khóa Học Nổi Bật</h2>
+      {/* HERO BANNER SECTION - FULL BLEED SLIDER */}
+      <section className="relative w-full overflow-hidden h-[480px] sm:h-[560px] md:h-[620px] bg-neutral-900 select-none">
         
-        {loadingCourses ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#85B7EB' }}>Đang tải khóa học...</div>
-        ) : featuredCourses.length > 0 ? (
-          <>
-            <div className="home-course-grid">
-              {featuredCourses.map((course) => (
-                <div key={course.id} className={`home-course-card ${course.featured ? 'featured' : ''}`}>
-                  {course.featured && (
-                    <div className="home-featured-label">{course.featuredLabel}</div>
-                  )}
+        {/* Slides */}
+        {slides.map((slide, index) => {
+          const isActive = index === activeSlide;
+          return (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? "opacity-100 z-10 pointer-events-auto" : "opacity-0 z-0 pointer-events-none"
+              }`}
+            >
+              {/* Background Image with Scale Animation */}
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={slide.image}
+                  alt={slide.title}
+                  className={`w-full h-full object-cover object-[center_35%] transform transition-transform duration-[6000ms] ease-out ${
+                    isActive ? "scale-105" : "scale-100"
+                  }`}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/85 via-neutral-900/60 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/40 via-transparent to-transparent"></div>
+              </div>
 
-                  <div
-                    className={`home-card-header ${course.headerClass}`}
-                    style={course.thumbnail ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.7)), url(/images/courses/${course.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
-                  >
-                    <div className="home-card-badges">
-                      {course.badges.map((badge, index) => (
-                        <span key={index} className={`home-badge ${badge.class}`}>
-                          {badge.text}
+              {/* Slide Content Container */}
+              <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 relative z-20 flex items-center">
+                <div className="w-full py-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                  
+                  {/* Text Content */}
+                  <div className={`space-y-5 sm:space-y-6 max-w-2xl text-left transition-all duration-700 delay-300 transform ${
+                    isActive ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+                  }`}>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded text-[10px] font-bold bg-white/10 text-white backdrop-blur-md border border-white/15 tracking-widest uppercase">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-550 animate-ping"></span>
+                      {slide.tag}
+                    </div>
+                    
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight">
+                      {slide.title}<br />
+                      <span className="text-white">
+                        {slide.highlightTitle}
+                      </span>
+                    </h1>
+                    
+                    <p className="text-sm sm:text-base md:text-lg text-neutral-300 leading-relaxed max-w-lg font-medium">
+                      {slide.subtitle}
+                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-4 pt-2">
+                      <Link
+                        to={slide.btnLink}
+                        className="px-8 py-3.5 bg-white hover:bg-neutral-100 text-neutral-950 font-bold rounded transition-all text-sm text-center"
+                      >
+                        {slide.btnText}
+                      </Link>
+                      <a
+                        href="#promo"
+                        className="px-8 py-3.5 bg-white/15 hover:bg-white/25 text-white font-bold rounded border border-white/20 hover:border-white/30 backdrop-blur-md transition-all text-sm text-center"
+                      >
+                        Săn Deal Hot
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Promo Badge */}
+                  <div className={`relative self-stretch md:self-auto flex items-end md:items-center justify-start md:justify-center transition-all duration-700 delay-500 transform ${
+                    isActive ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+                  }`}>
+                    <div className="bg-white/10 border border-white/20 backdrop-blur-md p-6 rounded-xl shadow-2xl max-w-xs space-y-4 text-white hover:border-white/30 transition-all group">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="w-9 h-9 rounded bg-white/10 flex items-center justify-center text-lg">
+                          🏷️
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded bg-red-650 text-[10px] font-black tracking-wider uppercase">
+                          Mã: {slide.promoCode}
                         </span>
-                      ))}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-neutral-300 font-bold uppercase tracking-wider">{slide.promoDesc}</p>
+                        <p className="text-lg font-extrabold text-white leading-tight group-hover:text-white transition-colors">
+                          {slide.promoHeading}
+                        </p>
+                      </div>
+                      
+                      <div className="pt-3 border-t border-white/10 flex justify-between items-center text-xs text-neutral-300 font-semibold">
+                        <span>Hạn dùng: 31/12</span>
+                        <span className="text-white hover:underline cursor-pointer flex items-center gap-1">
+                          Nhận mã
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"></path>
+                          </svg>
+                        </span>
+                      </div>
                     </div>
-                    <div className="home-card-title-text">{course.title}</div>
                   </div>
 
-                  <div className="home-card-body">
-                    <div className="home-card-meta">{course.meta}</div>
-                    <div className="home-card-schedule">{course.schedule}</div>
-                    <div className="home-card-rating">
-                      {renderStars(course.rating)} <span>({course.reviews})</span>
-                    </div>
-                    <div className="home-card-price">
-                      {course.price}
-                      <span className="home-card-price-old">{course.oldPrice}</span>
-                    </div>
-                  </div>
                 </div>
-              ))}
+              </div>
             </div>
-            
-            <div style={{ textAlign: 'center', marginTop: '40px' }}>
-              <Link to="/courses" className="home-btn-outline" style={{ textDecoration: 'none', padding: '12px 32px', fontSize: '15px' }}>
-                Xem tất cả khóa học →
-              </Link>
-            </div>
-          </>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#85B7EB' }}>Chưa có khóa học nào.</div>
-        )}
-      </section>
+          );
+        })}
 
-      {/* WHY */}
-      <section className="home-why-section">
-        <h2 className="home-section-title">Tại sao chọn UTE Tech?</h2>
-        <div className="home-why-grid">
-          {MOCK_REASONS.map((reason) => (
-            <div key={reason.id} className="home-why-card">
-              <div className={`home-why-icon ${reason.iconClass}`}>{reason.icon}</div>
-              <div className="home-why-title">{reason.title}</div>
-              <div className="home-why-desc">{reason.desc}</div>
-            </div>
+        {/* Navigation Arrows */}
+        <button
+          onClick={() => setActiveSlide((prev) => (prev - 1 + slides.length) % slides.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 border border-white/10 text-white flex items-center justify-center backdrop-blur-sm transition-all active:scale-95 group"
+          aria-label="Previous Slide"
+        >
+          <svg className="w-6 h-6 transform group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button
+          onClick={() => setActiveSlide((prev) => (prev + 1) % slides.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/15 hover:bg-white/25 border border-white/10 text-white flex items-center justify-center backdrop-blur-sm transition-all active:scale-95 group"
+          aria-label="Next Slide"
+        >
+          <svg className="w-6 h-6 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+
+        {/* Navigation Indicator Dots */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2.5">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setActiveSlide(index)}
+              className={`h-2 rounded-full transition-all duration-500 ${
+                index === activeSlide ? "w-8 bg-white" : "w-2 bg-white/30 hover:bg-white/50"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
           ))}
         </div>
+
       </section>
 
-      {/* TESTIMONIALS */}
-      <section className="home-testimonial-section">
-        <h2 className="home-section-title">Học viên nói gì về UTE Tech?</h2>
-        {loadingReviews ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#85B7EB' }}>Đang tải đánh giá...</div>
-        ) : reviews.length > 0 ? (
-          <div className="home-testimonial-grid">
-            {reviews.map((testi) => (
-              <div key={testi.id} className="home-testi-card">
-                <div className="home-testi-stars">{renderStars(testi.stars)}</div>
-                <p className="home-testi-text">{testi.text}</p>
-                <div className="home-testi-author">
-                  <div className="home-testi-avatar" style={{ background: testi.avatarBg }}>
-                    {testi.avatar}
-                  </div>
-                  <div>
-                    <div className="home-testi-name">{testi.name}</div>
-                    <div className="home-testi-role">{testi.role}</div>
-                  </div>
-                </div>
+      {/* BODY CONTENT */}
+      {loading ? (
+        <div className="max-w-7xl mx-auto py-24 px-4 flex flex-col items-center justify-center flex-1">
+          <div className="w-12 h-12 border-4 border-neutral-900 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-neutral-400 font-medium animate-pulse">Đang tải sản phẩm thời trang...</p>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20 flex-1">
+          
+          {/* SECTION 1: PROMOTIONS */}
+          <section id="promo" className="space-y-6 scroll-mt-20">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="text-red-650 text-xs font-bold uppercase tracking-widest">Ưu đãi độc quyền</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 uppercase mt-1 flex items-center gap-2">
+                  Khuyến Mãi Hot 🔥
+                </h2>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#85B7EB' }}>Chưa có đánh giá nào.</div>
-        )}
-      </section>
+              <Link to="/products" className="text-sm font-bold text-neutral-900 hover:text-black flex items-center group">
+                Xem tất cả ưu đãi 
+                <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {promoProducts.map(product => {
+                const discount = Math.round(((product.price - product.salePrice) / product.price) * 100);
+                return (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.id}`}
+                    className="group bg-white rounded-lg border border-neutral-200 hover:border-neutral-300 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
+                  >
+                    <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
+                      <img
+                        src={product.thumbnail || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800"}
+                        alt={product.name}
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-3 left-3 px-2 py-0.5 text-xs font-black bg-red-600 text-white rounded">
+                        -{discount}%
+                      </span>
+                      {product.stock === 0 && (
+                        <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="px-3 py-1.5 text-xs font-bold text-white bg-neutral-800 rounded">Hết Hàng</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <p className="text-xs text-neutral-400 font-semibold uppercase">{product.category?.name}</p>
+                        <h3 className="font-bold text-neutral-800 group-hover:text-neutral-900 transition-colors line-clamp-1 mt-1">
+                          {product.name}
+                        </h3>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-red-650 font-black text-base">
+                            {formatPrice(product.salePrice)}
+                          </span>
+                          <span className="text-xs text-neutral-400 line-through">
+                            {formatPrice(product.price)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-neutral-400 pt-1 border-t border-neutral-100">
+                          <div className="flex items-center gap-1">
+                            {renderStars(product.rating)}
+                            <span className="text-[10px] font-semibold text-neutral-500">({product.reviewCount})</span>
+                          </div>
+                          <span>Đã bán {product.sold}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 2: NEW ARRIVALS */}
+          <section className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="text-neutral-900 text-xs font-bold uppercase tracking-widest">Bắt kịp xu hướng</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 uppercase mt-1 flex items-center gap-2">
+                  Bộ Sưu Tập Mới Nhất ✨
+                </h2>
+              </div>
+              <Link to="/products" className="text-sm font-bold text-neutral-900 hover:text-black flex items-center group">
+                Xem tất cả hàng mới
+                <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {newestProducts.map(product => {
+                return (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.id}`}
+                    className="group bg-white rounded-lg border border-neutral-200 hover:border-neutral-300 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
+                  >
+                    <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
+                      <img
+                        src={product.thumbnail || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800"}
+                        alt={product.name}
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-3 left-3 px-2 py-0.5 text-xs font-bold bg-neutral-900 text-white rounded">
+                        MỚI
+                      </span>
+                      {product.stock === 0 && (
+                        <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="px-3 py-1.5 text-xs font-bold text-white bg-neutral-800 rounded">Hết Hàng</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <p className="text-xs text-neutral-400 font-semibold uppercase">{product.category?.name}</p>
+                        <h3 className="font-bold text-neutral-800 group-hover:text-neutral-900 transition-colors line-clamp-1 mt-1">
+                          {product.name}
+                        </h3>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          {product.salePrice ? (
+                            <>
+                              <span className="text-red-650 font-black text-base">
+                                {formatPrice(product.salePrice)}
+                              </span>
+                              <span className="text-xs text-neutral-400 line-through">
+                                {formatPrice(product.price)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-neutral-800 font-black text-base">
+                              {formatPrice(product.price)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-neutral-400 pt-1 border-t border-neutral-100">
+                          <div className="flex items-center gap-1">
+                            {renderStars(product.rating)}
+                            <span className="text-[10px] font-semibold text-neutral-500">({product.reviewCount})</span>
+                          </div>
+                          <span>Đã bán {product.sold}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 3: BEST SELLERS */}
+          <section className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <span className="text-amber-500 text-xs font-bold uppercase tracking-widest">Được yêu thích nhất</span>
+                <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 uppercase mt-1 flex items-center gap-2">
+                  Bán Chạy Nhất 🏆
+                </h2>
+              </div>
+              <Link to="/products" className="text-sm font-bold text-neutral-900 hover:text-black flex items-center group">
+                Xem tất cả bán chạy
+                <svg className="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {bestSellingProducts.map(product => {
+                return (
+                  <Link
+                    key={product.id}
+                    to={`/products/${product.id}`}
+                    className="group bg-white rounded-lg border border-neutral-200 hover:border-neutral-350 shadow-sm hover:shadow-md transition-all duration-350 overflow-hidden flex flex-col"
+                  >
+                    <div className="aspect-[4/5] bg-neutral-100 relative overflow-hidden">
+                      <img
+                        src={product.thumbnail || "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800"}
+                        alt={product.name}
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <span className="absolute top-3 left-3 px-2 py-0.5 text-xs font-bold bg-amber-500 text-white rounded">
+                        BEST
+                      </span>
+                      {product.stock === 0 && (
+                        <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px] flex items-center justify-center">
+                          <span className="px-3 py-1.5 text-xs font-bold text-white bg-neutral-800 rounded">Hết Hàng</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <p className="text-xs text-neutral-400 font-semibold uppercase">{product.category?.name}</p>
+                        <h3 className="font-bold text-neutral-800 group-hover:text-neutral-900 transition-colors line-clamp-1 mt-1">
+                          {product.name}
+                        </h3>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          {product.salePrice ? (
+                            <>
+                              <span className="text-red-650 font-black text-base">
+                                {formatPrice(product.salePrice)}
+                              </span>
+                              <span className="text-xs text-neutral-400 line-through">
+                                {formatPrice(product.price)}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-neutral-800 font-black text-base">
+                              {formatPrice(product.price)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-neutral-400 pt-1 border-t border-neutral-100">
+                          <div className="flex items-center gap-1">
+                            {renderStars(product.rating)}
+                            <span className="text-[10px] font-semibold text-neutral-500">({product.reviewCount})</span>
+                          </div>
+                          <span>Đã bán {product.sold}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* SECTION 4: TESTIMONIALS */}
+          <section className="space-y-6 bg-neutral-50 py-12 px-6 rounded-xl border border-neutral-200">
+            <div className="text-center max-w-xl mx-auto space-y-2">
+              <span className="text-neutral-900 text-xs font-bold uppercase tracking-widest">Khách hàng tin tưởng</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 uppercase">Phản Hồi Từ Khách Hàng ❤️</h2>
+              <p className="text-sm text-neutral-500">Chúng tôi luôn nỗ lực mang đến những trải nghiệm chất lượng nhất cho bạn.</p>
+            </div>
+
+            {reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {reviews.map(review => {
+                  const reviewerName = review.User?.fullName || review.User?.email?.split('@')[0] || "Khách hàng";
+                  const avatarLetter = reviewerName.substring(0, 1).toUpperCase();
+                  return (
+                    <div key={review.id} className="bg-white p-6 rounded-lg border border-neutral-200 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition-shadow">
+                      <div className="space-y-2">
+                        {renderStars(review.rating)}
+                        <p className="text-neutral-650 text-sm italic leading-relaxed">
+                          "{review.comment}"
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-3 pt-2 border-t border-neutral-100">
+                        <div className="w-10 h-10 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-neutral-700 font-bold overflow-hidden shadow-inner flex-shrink-0">
+                          {review.User?.image ? (
+                            <img src={review.User.image} alt={reviewerName} className="w-full h-full object-cover" />
+                          ) : (
+                            avatarLetter
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-neutral-800 text-sm">{reviewerName}</p>
+                          <p className="text-[11px] text-neutral-900 font-semibold truncate max-w-[180px]">Mua sản phẩm: {review.product?.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center text-neutral-450 py-12">Chưa có đánh giá nào từ khách hàng.</div>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* FOOTER */}
-      <footer className="home-footer">
-        <div className="home-footer-left">
-          <div className="home-footer-logo">
-            <div className="home-logo-box">UTE</div>
-            <div className="home-logo-text">UTE Tech</div>
-          </div>
-          <div className="home-footer-desc">Nền tảng học lập trình của cộng đồng Đại học Công nghệ Kỹ thuật TP.HCM.</div>
-          <div className="home-footer-social">
-            <div className="home-social-icon">YT</div>
-            <div className="home-social-icon">FB</div>
-            <div className="home-social-icon">DC</div>
-            <div className="home-social-icon">ZL</div>
-          </div>
-          <div className="home-footer-copy">© 2026 UTE Tech. All rights reserved.</div>
-        </div>
-        <div className="home-footer-links-container">
-          <div className="home-footer-links-col">
-            <h4>Khóa Học</h4>
-            <Link to="/courses">Khóa học Zoom</Link>
-            <Link to="/courses">Khóa học Video</Link>
-            <a href="#blog">Blog</a>
-            <a href="#tutorial">Tutorial</a>
-          </div>
-          <div className="home-footer-links-col">
-            <h4>Hỗ Trợ</h4>
-            <a href="#about">Về chúng tôi</a>
-            <a href="#policy">Chính sách</a>
-            <a href="#support">Hỗ trợ</a>
-            <a href="#contact">Liên hệ</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

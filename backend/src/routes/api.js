@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/authController");
 
-const courseController = require("../controllers/courseController");
+const productController = require("../controllers/productController");
 
 const { authenticate } = require("../middlewares/authMiddleware");
 
@@ -69,10 +69,11 @@ router.post(
 router.post("/reset-password", authController.resetPasswordWithOTP);
 
 const homeController = require("../controllers/homeController");
-// HOME
+// HOME & PRODUCTS
 router.get("/home-data", homeController.getHomePageData);
-router.get("/courses", courseController.getCourses);
-router.get("/featured-courses", homeController.getFeaturedCourses);
+router.get("/products", productController.getProducts);
+router.get("/products/:id", productController.getProductById);
+router.get("/categories", productController.getCategoriesList);
 
 module.exports = router;
  
